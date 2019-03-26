@@ -36,7 +36,7 @@ public class Implementation implements WordSearchGame {
     @Override
     public void setBoard(String[] letterArray) {
         gameBoard = letterArray;
-        n = Math.sqrt(letterArray.length);
+        n = (int) Math.sqrt(letterArray.length);
     }
 
     @Override
@@ -48,9 +48,34 @@ public class Implementation implements WordSearchGame {
         return output;
     }
 
+    /**
+     * Retrieves all valid words on the game board, according to the stated game
+     * rules.
+     *
+     * @param minimumWordLength The minimum allowed length (i.e., number of
+     *     characters) for any word found on the board.
+     * @return java.util.SortedSet which contains all the words of minimum length
+     *     found on the game board and in the lexicon.
+     * @throws IllegalArgumentException if minimumWordLength < 1
+     * @throws IllegalStateException if loadLexicon has not been called.
+     */
     @Override
     public SortedSet<String> getAllValidWords(int minimumWordLength) {
-        return null;
+        if (minimumWordLength < 1) {
+            throw new IllegalArgumentException("Minimum word length is too low");
+        }
+        else if (lexiconLoaded == false) {
+            throw new IllegalStateException("Lexicon has not been loaded");
+        }
+        else {
+            TreeSet<String> output = new TreeSet<String>();
+            for (String word : lexicon) {
+                if (word.length() >= minimumWordLength) {
+                    output.add(word);
+                }
+            }
+            return output;
+        }
     }
 
     @Override
