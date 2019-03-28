@@ -4,13 +4,23 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.TreeSet;
+import java.util.Stack;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 public class Implementation implements WordSearchGame {
 
     TreeSet<String> lexicon = new TreeSet<String>();
     Boolean lexiconLoaded = false;
-    String[] gameBoard = new String[0];
+    String[][] gameBoard = new String[0][0];
+    Boolean[][] visited = new Boolean[0][0];
     int n = 0;
+    int numRows;
+    int numCols;
+    int order = 0;
+    int[][] orderGrid = new int[0][0];
+    TreeSet<String> validWords = new TreeSet<String>();
 
     /**
      * Loads the lexicon into a data structure for later use.
@@ -35,15 +45,28 @@ public class Implementation implements WordSearchGame {
 
     @Override
     public void setBoard(String[] letterArray) {
-        gameBoard = letterArray;
         n = (int) Math.sqrt(letterArray.length);
+        int i = 0;
+        gameBoard = new String[n][n];
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                gameBoard[row][col] = letterArray[i];
+                i++;
+            }
+        }
+        numCols = n;
+        numRows = n;
+        visited = new Boolean[n][n];
+        orderGrid = new int[n][n];
     }
 
     @Override
     public String getBoard() {
         String output = "";
-        for (String letter: gameBoard) {
-            output += letter;
+        for (String[] row : gameBoard) {
+            for (String letter : row) {
+                output += letter;
+            }
         }
         return output;
     }
@@ -59,6 +82,25 @@ public class Implementation implements WordSearchGame {
      * @throws IllegalArgumentException if minimumWordLength < 1
      * @throws IllegalStateException if loadLexicon has not been called.
      */
+//    @Override
+//    public SortedSet<String> getAllValidWords(int minimumWordLength) {
+//        if (minimumWordLength < 1) {
+//            throw new IllegalArgumentException("Minimum word length is too low");
+//        }
+//        else if (lexiconLoaded == false) {
+//            throw new IllegalStateException("Lexicon has not been loaded");
+//        }
+//        else {
+//            TreeSet<String> output = new TreeSet<String>();
+//            for (String word : lexicon) {
+//                if (word.length() >= minimumWordLength) {
+//                    output.add(word);
+//                }
+//            }
+//            return output;
+//        }
+//    }
+
     @Override
     public SortedSet<String> getAllValidWords(int minimumWordLength) {
         if (minimumWordLength < 1) {
@@ -68,19 +110,22 @@ public class Implementation implements WordSearchGame {
             throw new IllegalStateException("Lexicon has not been loaded");
         }
         else {
-            TreeSet<String> output = new TreeSet<String>();
-            for (String word : lexicon) {
-                if (word.length() >= minimumWordLength) {
-                    output.add(word);
+            for (int row = 0; row < numRows; row++) {
+                for (int col = 0; col < numCols; col++) {
+                    Position p = new Position(row, col);
+                    p.dfs(p);
                 }
             }
-            return output;
         }
+        return validWords;
     }
+
 
     @Override
     public int getScoreForWords(SortedSet<String> words, int minimumWordLength) {
+        Stack<String> S = new Stack<String>();
         return 0;
+
     }
 
     /**
@@ -128,6 +173,81 @@ public class Implementation implements WordSearchGame {
 
     @Override
     public List<Integer> isOnBoard(String wordToCheck) {
+        Stack<String> S = new Stack<String>();
         return null;
     }
+
+    class Position {
+        int x;
+        int y;
+        String letter;
+
+        public Position(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.letter = gameBoard[x][y];
+        }
+
+        public boolean isValid(Position p) {
+            return (p.x >= 0) && (p.x < numRows) && (p.y >= 0) && (p.y < numCols);
+        }
+
+        public boolean isVisited(Position p) {
+            return visited[p.x][p.y];
+        }
+
+        public void visit(Position p) {
+            visited[p.x][p.y] = true;
+        }
+
+        private void process(Position p) {
+            orderGrid[p.x][p.y] = order++;
+        }
+
+        public Position[] neighbors() {
+            Position[] nbrs = new Position[8];
+            int count = 0;
+            Position p;
+
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    if (!((i == 0) && (j == 0))) {
+                        p = new Position(x + i, y + j);
+                        if (isValid(p)) {
+                            nbrs[count++] = p;
+                        }
+                    }
+                }
+            }
+            return Arrays.copyOf(nbrs, count);
+        }
+
+        public void dfs(Position start) {
+            String word = "";
+            Deque<Position> stack = new ArrayDeque<>();
+            visit(start);
+            stack.addFirst(start);
+            while (!stack.isEmpty()) {
+                Position position = stack.removeFirst();
+                word += position.letter;
+                if (isValidWord(word)) {
+                    validWords.add(word);
+                    if (isValidPrefix(word)) {
+                        //IDK
+                    }
+                    else {
+                        word = "";
+                    }
+                }
+                process(position);
+                for (Position neighbor : position.neighbors()) {
+                    if (!isVisited(neighbor)) {
+                        visit(neighbor);
+                        stack.addFirst(neighbor);
+                    }
+                }
+            }
+        }
+    }
+
 }
